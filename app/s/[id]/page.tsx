@@ -258,6 +258,7 @@ export default function SheetPage() {
       <div className="grid-wrapper">
         <Grid
           sheet={sheet}
+          computedValues={sheet.computedValues}
           onCellUpdate={handleCellUpdate}
           selectedCell={selectedCell}
           onCellSelect={handleCellSelect}
