@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Sheet, Cell, CellAddress, toCellAddress } from "@/types";
+import { Sheet, CellAddress, toCellAddress } from "@/types";
 import CellComponent from "./Cell";
-import { colToLetter } from "@/lib/grid";
 
 interface GridProps {
   sheet: Sheet;
+  computedValues: Record<string, any>;
   onCellUpdate: (address: CellAddress, value: string) => Promise<void>;
   selectedCell: CellAddress | null;
   onCellSelect: (address: CellAddress) => void;
@@ -19,6 +19,7 @@ interface GridProps {
 
 export default function Grid({
   sheet,
+  computedValues,
   onCellUpdate,
   selectedCell,
   onCellSelect,
@@ -205,6 +206,7 @@ export default function Grid({
                     key={address}
                     address={address}
                     cell={cell}
+                    computedValue={computedValues[address]}
                     isSelected={isSelected}
                     isEditing={isEditing}
                     isHighlighted={isHighlighted}

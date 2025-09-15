@@ -6,6 +6,7 @@ import { Cell, CellAddress } from "@/types";
 interface CellProps {
   address: CellAddress;
   cell: Cell | undefined;
+  computedValue?: Record<number, string | number>;
   isSelected: boolean;
   isEditing: boolean;
   isHighlighted: boolean;
@@ -20,6 +21,7 @@ interface CellProps {
 export default function CellComponent({
   address,
   cell,
+  computedValue,
   isSelected,
   isEditing,
   isHighlighted,
@@ -46,8 +48,12 @@ export default function CellComponent({
       case "literal":
         return String(cell.value);
       case "formula":
-        // Show the formula when selected, computed value otherwise
-        return isSelected && !isEditing ? cell.src : "..."; // Placeholder for computed value
+        // Show the formula when selected and not editing, computed value otherwise
+        if (isSelected && !isEditing) {
+          return cell.src;
+        }
+        // Use computed value if available
+        return computedValue !== undefined ? String(computedValue) : "...";
       case "error":
         return `#${cell.code}!`;
       default:
