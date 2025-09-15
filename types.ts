@@ -1,40 +1,74 @@
 // Branded type for cell addresses
-export type CellAddress = string & { __brand: 'CellAddress' };
+export type CellAddress = string & { __brand: "CellAddress" };
 
 // Helper functions for CellAddress
 export const toCellAddress = (addr: string): CellAddress => {
-  // TODO: Validate format (e.g., A1, B12, AA99)
+  // Validate format (e.g., A1, B12, AA99)
+  const valid = /^[A-Z]+[0-9]+$/.test(addr);
+  if (!valid) {
+    throw new Error(`Invalid cell address format: ${addr}`);
+  }
   return addr as CellAddress;
 };
 
-export const parseCellAddress = (addr: CellAddress): { col: number; row: number } => {
-  // TODO: Parse "A1" -> { col: 0, row: 0 }
-  throw new Error('Not implemented');
+export const parseCellAddress = (
+  addr: CellAddress
+): { col: number; row: number } => {
+  // Parse "A1" -> { col: 0, row: 0 }
+  const match = addr.match(/^([A-Z]+)([0-9]+)$/);
+  if (!match) {
+    throw new Error(`Invalid cell address: ${addr}`);
+  }
+
+  const [, letters, digits] = match;
+
+  // Convert letters to column index (A=0, B=1, ..., Z=25, AA=26, etc.)
+  let col = 0;
+  for (let i = 0; i < letters.length; i++) {
+    col = col * 26 + (letters.charCodeAt(i) - 65 + 1);
+  }
+  col = col - 1; // Convert to 0-based index
+
+  const row = parseInt(digits) - 1; // Convert to 0-based index
+
+  return { col, row };
 };
 
 export const formatCellAddress = (col: number, row: number): CellAddress => {
-  // TODO: Format { col: 0, row: 0 } -> "A1"
-  throw new Error('Not implemented');
+  // Format { col: 0, row: 0 } -> "A1"
+
+  // Convert column index to letters
+  let letters = "";
+  let colNum = col;
+  while (colNum >= 0) {
+    letters = String.fromCharCode((colNum % 26) + 65) + letters;
+    colNum = Math.floor(colNum / 26) - 1;
+  }
+
+  // Convert row to 1-based
+  const rowStr = String(row + 1);
+
+  return toCellAddress(letters + rowStr);
 };
 
 // Cell types (discriminated union)
 export type Cell = LiteralCell | FormulaCell | ErrorCell;
 
 export interface LiteralCell {
-  kind: 'literal';
+  kind: "literal";
   value: number | string | boolean;
 }
 
 export interface FormulaCell {
-  kind: 'formula';
+  kind: "formula";
   src: string;
   ast: FormulaAst;
 }
 
 export interface ErrorCell {
-  kind: 'error';
+  kind: "error";
   message: string;
-  code: 'CYCLE' | 'REF' | 'PARSE' | 'DIV0';
+  code: "CYCLE" | "REF" | "PARSE" | "DIV0" | "EVAL";
 }
 
 // Formula AST nodes
@@ -49,48 +83,48 @@ export type FormulaAst =
   | UnaryOp;
 
 export interface NumberLiteral {
-  type: 'number';
+  type: "number";
   value: number;
 }
 
 export interface StringLiteral {
-  type: 'string';
+  type: "string";
   value: string;
 }
 
 export interface BooleanLiteral {
-  type: 'boolean';
+  type: "boolean";
   value: boolean;
 }
 
 export interface CellRef {
-  type: 'ref';
+  type: "ref";
   address: CellAddress;
   absolute: { col: boolean; row: boolean };
 }
 
 export interface RangeRef {
-  type: 'range';
+  type: "range";
   start: CellAddress;
   end: CellAddress;
 }
 
 export interface FunctionCall {
-  type: 'function';
+  type: "function";
   name: string;
   args: FormulaAst[];
 }
 
 export interface BinaryOp {
-  type: 'binary';
-  op: '+' | '-' | '*' | '/' | '^' | '<' | '<=' | '>' | '>=' | '=' | '<>';
+  type: "binary";
+  op: "+" | "-" | "*" | "/" | "^" | "<" | "<=" | ">" | ">=" | "=" | "<>";
   left: FormulaAst;
   right: FormulaAst;
 }
 
 export interface UnaryOp {
-  type: 'unary';
-  op: '-';
+  type: "unary";
+  op: "-";
   operand: FormulaAst;
 }
 
@@ -101,12 +135,13 @@ export interface Sheet {
   rows: number;
   cols: number;
   cells: Record<CellAddress, Cell>;
+  computedValues: Record<number, number | string>;
   updatedAt: Date;
 }
 
 // Type guard
 export const isFormula = (cell: Cell): cell is FormulaCell => {
-  return cell.kind === 'formula';
+  return cell.kind === "formula";
 };
 
 // Evaluation result types
@@ -128,7 +163,7 @@ export interface ExplainTrace {
 // API types
 export interface CellEdit {
   addr: CellAddress;
-  kind: 'literal' | 'formula' | 'clear';
+  kind: "literal" | "formula" | "clear";
   value?: string | number | boolean;
   formula?: string;
 }
@@ -143,11 +178,3 @@ export interface EvalRequest {
   id: string;
   addr: CellAddress;
 }
-
-// Database indexing notes:
-// For a multi-sheet, multi-user Postgres implementation, consider these indices:
-// 1. Primary: (sheet_id, row, col) - for direct cell lookups
-// 2. (sheet_id, updated_at DESC) - for recent changes/activity
-// 3. (user_id, sheet_id) - for user's sheets
-// 4. (sheet_id, cell_type) WHERE cell_type = 'formula' - for dependency rebuilding
-// 5. Full-text index on formula src for searching formulas
