@@ -11,6 +11,7 @@ export default function SheetPage() {
   const sheetId = params.id as string;
 
   const [sheet, setSheet] = useState<Sheet | null>(null);
+  const [computedValues, setComputedValues] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [selectedCell, setSelectedCell] = useState<CellAddress | null>(null);
   const [editingCell, setEditingCell] = useState<CellAddress | null>(null);
@@ -27,6 +28,7 @@ export default function SheetPage() {
       if (response.ok) {
         const data = await response.json();
         setSheet(data);
+        setComputedValues(data.computedValues || {});
         // Select A1 by default
         setSelectedCell(toCellAddress("A1"));
       }
@@ -36,6 +38,11 @@ export default function SheetPage() {
       setLoading(false);
     }
   };
+
+  const handleEndEdit = useCallback(() => {
+    setEditingCell(null);
+    setEditValue("");
+  }, []);
 
   const handleCellSelect = useCallback(
     (address: CellAddress) => {
@@ -59,7 +66,7 @@ export default function SheetPage() {
         }
       }
     },
-    [sheet, editingCell]
+    [sheet, editingCell, handleEndEdit]
   );
 
   const handleStartEdit = useCallback(
@@ -85,10 +92,6 @@ export default function SheetPage() {
     },
     [sheet]
   );
-
-  const handleEndEdit = useCallback(() => {
-    setEditingCell(null);
-  }, []);
 
   const handleCellUpdate = async (address: CellAddress, value: string) => {
     if (!sheet) return;
@@ -133,7 +136,20 @@ export default function SheetPage() {
       if (response.ok) {
         const updatedData = await response.json();
         setSheet(updatedData);
-        setFormulaBarValue(value);
+        setComputedValues(updatedData.computedValues || {});
+        // Update formula bar with the actual cell content after update
+        const cell = updatedData.cells[address];
+        if (cell) {
+          if (cell.kind === "formula") {
+            setFormulaBarValue(cell.src);
+          } else if (cell.kind === "literal") {
+            setFormulaBarValue(String(cell.value));
+          } else {
+            setFormulaBarValue("");
+          }
+        } else {
+          setFormulaBarValue("");
+        }
       }
     } catch (error) {
       console.error("Failed to update cell:", error);
@@ -160,14 +176,13 @@ export default function SheetPage() {
       handleCellUpdate(selectedCell, formulaBarValue);
       handleEndEdit();
     }
-  }, [selectedCell, formulaBarValue]);
+  }, [selectedCell, formulaBarValue, handleCellUpdate, handleEndEdit]);
 
   const handleFormulaBarStartEdit = useCallback(() => {
     if (selectedCell && !editingCell) {
       handleStartEdit(selectedCell);
     }
   }, [selectedCell, editingCell]);
-  
 
   const exportCSV = () => {
     if (!sheet) return;
@@ -258,7 +273,7 @@ export default function SheetPage() {
       <div className="grid-wrapper">
         <Grid
           sheet={sheet}
-          computedValues={sheet.computedValues}
+          computedValues={computedValues}
           onCellUpdate={handleCellUpdate}
           selectedCell={selectedCell}
           onCellSelect={handleCellSelect}

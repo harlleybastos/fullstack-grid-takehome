@@ -6,7 +6,7 @@ import { Cell, CellAddress } from "@/types";
 interface CellProps {
   address: CellAddress;
   cell: Cell | undefined;
-  computedValue?: Record<number, string | number>;
+  computedValue?: any;
   isSelected: boolean;
   isEditing: boolean;
   isHighlighted: boolean;

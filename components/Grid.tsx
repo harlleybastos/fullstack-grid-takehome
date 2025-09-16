@@ -49,19 +49,10 @@ export default function Grid({
       let newCol = col;
       let newRow = row;
 
-      // If editing, only handle Enter, Tab, Escape
+      // If editing, only handle Tab and Escape
+      // Let the Cell component handle Enter key
       if (editingCell) {
         switch (e.key) {
-          case "Enter":
-            e.preventDefault();
-            onEndEdit();
-            // Move down
-            if (row < sheet.rows - 1) {
-              newRow = row + 1;
-              const newAddr = toCellAddress(`${colLetters}${newRow + 1}`);
-              onCellSelect(newAddr);
-            }
-            break;
           case "Tab":
             e.preventDefault();
             onEndEdit();
@@ -224,6 +215,17 @@ export default function Grid({
                     onEditSubmit={() => {
                       onCellUpdate(address, editValue);
                       onEndEdit();
+                      // Move down after saving
+                      const match = address.match(/^([A-Z]+)(\d+)$/);
+                      if (match) {
+                        const colLetters = match[1];
+                        const row = parseInt(match[2]) - 1;
+                        if (row < sheet.rows - 1) {
+                          const newRow = row + 1;
+                          const newAddr = toCellAddress(`${colLetters}${newRow + 1}`);
+                          onCellSelect(newAddr);
+                        }
+                      }
                     }}
                     onEditCancel={onEndEdit}
                   />
