@@ -17,25 +17,33 @@ describe('Formula Parser', () => {
     // Should parse as 1+(2*3) not (1+2)*3
     const ast = parseFormula('1+2*3');
     expect(ast.type).toBe('binary');
-    expect(ast.op).toBe('+');
-    // Right side should be multiplication
-    expect(ast.right.type).toBe('binary');
-    expect(ast.right.op).toBe('*');
+    if (ast.type === 'binary') {
+      expect(ast.op).toBe('+');
+      // Right side should be multiplication
+      expect(ast.right.type).toBe('binary');
+      if (ast.right.type === 'binary') {
+        expect(ast.right.op).toBe('*');
+      }
+    }
   });
   
   test('parses cell references', () => {
     // This will fail until parser is implemented
     const ast = parseFormula('A1');
     expect(ast.type).toBe('ref');
-    expect(ast.address).toBe(toCellAddress('A1'));
+    if (ast.type === 'ref') {
+      expect(ast.address).toBe(toCellAddress('A1'));
+    }
   });
   
   test('parses function calls', () => {
     // This will fail until parser is implemented
     const ast = parseFormula('SUM(A1,B2,C3)');
     expect(ast.type).toBe('function');
-    expect(ast.name).toBe('SUM');
-    expect(ast.args).toHaveLength(3);
+    if (ast.type === 'function') {
+      expect(ast.name).toBe('SUM');
+      expect(ast.args).toHaveLength(3);
+    }
   });
 });
 
@@ -117,6 +125,7 @@ describe('Built-in Functions', () => {
           ast: parseFormula('SUM(A1:A3)')
         }
       },
+      computedValues: {},
       updatedAt: new Date()
     };
     
@@ -140,6 +149,7 @@ describe('Built-in Functions', () => {
           ast: parseFormula('IF(A1>5,"big","small")')
         }
       },
+      computedValues: {},
       updatedAt: new Date()
     };
     

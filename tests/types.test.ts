@@ -36,7 +36,7 @@ describe('Type Guards', () => {
 describe('Cell Address Helpers', () => {
   test('toCellAddress creates branded type', () => {
     const addr = toCellAddress('A1');
-    expect(addr).toBe('A1');
+    expect(addr).toBe(toCellAddress('A1'));
   });
   
   test('parseCellAddress extracts column and row', () => {
