@@ -88,7 +88,6 @@ export default function SheetPage() {
 
   const handleEndEdit = useCallback(() => {
     setEditingCell(null);
-    setEditValue("");
   }, []);
 
   const handleCellUpdate = async (address: CellAddress, value: string) => {
@@ -132,8 +131,8 @@ export default function SheetPage() {
       });
 
       if (response.ok) {
-        const updatedSheet = await response.json();
-        setSheet(updatedSheet);
+        const updatedData = await response.json();
+        setSheet(updatedData);
         setFormulaBarValue(value);
       }
     } catch (error) {
@@ -168,6 +167,7 @@ export default function SheetPage() {
       handleStartEdit(selectedCell);
     }
   }, [selectedCell, editingCell]);
+  
 
   const exportCSV = () => {
     if (!sheet) return;

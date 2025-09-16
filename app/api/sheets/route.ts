@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { sheetStore } from '@/lib/state';
-import { Sheet, toCellAddress } from '@/types';
-import { SheetCreateSchema, validateRequest } from '@/lib/validation';
+import { NextRequest, NextResponse } from "next/server";
+import { sheetStore } from "@/lib/state";
+import { Sheet } from "@/types";
+import { SheetCreateSchema, validateRequest } from "@/lib/validation";
 
 // GET /api/sheets - List all sheets
 export async function GET() {
@@ -10,7 +10,7 @@ export async function GET() {
     return NextResponse.json(sheets);
   } catch (error) {
     return NextResponse.json(
-      { error: 'Failed to fetch sheets' },
+      { error: "Failed to fetch sheets" },
       { status: 500 }
     );
   }
@@ -21,16 +21,13 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const validation = validateRequest(SheetCreateSchema, body);
-    
+
     if (!validation.success) {
-      return NextResponse.json(
-        { error: validation.error },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
     const { name, rows, cols } = validation.data;
-    
+
     // Create new sheet
     const sheet: Sheet = {
       id: `sheet-${Date.now()}`,
@@ -38,15 +35,16 @@ export async function POST(request: NextRequest) {
       rows,
       cols,
       cells: {},
-      updatedAt: new Date()
+      computedValues: {},
+      updatedAt: new Date(),
     };
 
     sheetStore.create(sheet);
-    
+
     return NextResponse.json(sheet, { status: 201 });
   } catch (error) {
     return NextResponse.json(
-      { error: 'Failed to create sheet' },
+      { error: "Failed to create sheet" },
       { status: 500 }
     );
   }

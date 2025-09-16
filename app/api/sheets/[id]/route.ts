@@ -7,11 +7,12 @@ import { parseFormula } from "@/lib/parser";
 
 // GET /api/sheets/[id] - Get sheet snapshot
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const sheet = sheetStore.get(params?.id);
+    const { id } = await context.params;
+    const sheet = sheetStore.get(id);
 
     if (!sheet) {
       return NextResponse.json({ error: "Sheet not found" }, { status: 404 });
@@ -46,10 +47,11 @@ export async function GET(
 // PATCH /api/sheets/[id] - Apply cell edits
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const sheet = sheetStore.get(params.id);
+    const { id } = await context.params;
+    const sheet = sheetStore.get(id);
 
     if (!sheet) {
       return NextResponse.json({ error: "Sheet not found" }, { status: 404 });
@@ -96,7 +98,7 @@ export async function PATCH(
     }
 
     sheet.updatedAt = new Date();
-    sheetStore.update(params.id, sheet);
+    sheetStore.update(sheet.id, sheet);
 
     // Recalculate all formulas and return computed values
     const results = engine.evaluateSheet(sheet);
