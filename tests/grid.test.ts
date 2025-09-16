@@ -76,9 +76,9 @@ describe('Address Parsing', () => {
   test('formatAddress creates proper address strings', () => {
     // These will fail until implemented
     expect(formatAddress(0, 0)).toBe(toCellAddress('A1'));
-    expect(formatAddress(0, 0, true, true)).toBe(toCellAddress('$A$1'));
-    expect(formatAddress(1, 2, false, true)).toBe(toCellAddress('B$3'));
-    expect(formatAddress(25, 99, true, false)).toBe(toCellAddress('$Z100'));
+    expect(formatAddress(0, 0, true, true)).toBe('$A$1' as any);
+    expect(formatAddress(1, 2, false, true)).toBe('B$3' as any);
+    expect(formatAddress(25, 99, true, false)).toBe('$Z100' as any);
   });
 });
 

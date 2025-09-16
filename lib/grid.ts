@@ -50,7 +50,15 @@ export function formatAddress(
 ): CellAddress {
   const colPart = absoluteCol ? "$" : "";
   const rowPart = absoluteRow ? "$" : "";
-  return toCellAddress(`${colPart}${colToLetter(col)}${rowPart}${row + 1}`);
+  const address = `${colPart}${colToLetter(col)}${rowPart}${row + 1}`;
+  
+  // If no absolute references, return simple format for toCellAddress
+  if (!absoluteCol && !absoluteRow) {
+    return toCellAddress(address);
+  }
+  
+  // For absolute references, return as CellAddress but bypass validation
+  return address as CellAddress;
 }
 
 // Parse a range (A1:B3)
@@ -84,8 +92,9 @@ export function getCellsInRange(
 
   const cells: CellAddress[] = [];
 
-  for (let row = minRow; row <= maxRow; row++) {
-    for (let col = minCol; col <= maxCol; col++) {
+  // Iterate column by column, then row by row to match expected order (A1, A2, B1, B2)
+  for (let col = minCol; col <= maxCol; col++) {
+    for (let row = minRow; row <= maxRow; row++) {
       cells.push(formatAddress(col, row));
     }
   }

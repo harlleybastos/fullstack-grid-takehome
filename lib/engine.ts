@@ -48,6 +48,11 @@ export class DependencyGraph {
   }
 
   hasCycle(from: CellAddress, to: CellAddress): boolean {
+    // Check for self-reference first
+    if (from === to) {
+      return true;
+    }
+
     // Simple DFS cycle detection
     const visited = new Set<CellAddress>();
     const stack = new Set<CellAddress>();
@@ -176,10 +181,11 @@ export class FormulaEngine {
 
         return trace ? { value, explain: ctx.trace } : { value };
       } catch (error) {
+        const errorCode = (error as any)?.code || "EVAL";
         return {
           value: null,
           error: {
-            code: "EVAL",
+            code: errorCode,
             message:
               error instanceof Error ? error.message : "Evaluation error",
           },
@@ -234,7 +240,9 @@ export class FormulaEngine {
   private evaluateCellRef(address: CellAddress, ctx: EvalContext): CellValue {
     // Check for cycles
     if (ctx.visited.has(address)) {
-      throw new Error("Circular reference detected");
+      const cycleError = new Error("Circular reference detected");
+      (cycleError as any).code = "CYCLE";
+      throw cycleError;
     }
 
     ctx.visited.add(address);
